@@ -2,24 +2,25 @@
 const MonthlyEnergy = require("../models/MonthlyEnergy");
 
 // ⚡ Tiered rates (same as before)
+// Sri Lanka electricity tiers with fixed charge
 const tieredRates = [
-  { limit: 30, rate: 10 },
-  { limit: 60, rate: 20 },
-  { limit: 90, rate: 30 },
-  { limit: 120, rate: 40 },
-  { limit: 180, rate: 50 },
-  { limit: Infinity, rate: 75 }
+  { limit: 30, rate: 10, fixed: 75 },
+  { limit: 60, rate: 20, fixed: 150 },
+  { limit: 90, rate: 30, fixed: 400 },
+  { limit: 120, rate: 40, fixed: 1000 },
+  { limit: 180, rate: 50, fixed: 1500 },
+  { limit: Infinity, rate: 75, fixed: 2000 }
 ];
 
-/**
- * Calculate electricity bill using tiered pricing
- */
 function calculateTieredBill(kWh) {
+
   let totalBill = 0;
   let remaining = kWh;
   let previousLimit = 0;
+  let fixedCharge = 0;
 
   for (const tier of tieredRates) {
+
     const tierSize = tier.limit - previousLimit;
     const consumption = Math.min(remaining, tierSize);
 
@@ -27,12 +28,15 @@ function calculateTieredBill(kWh) {
 
     totalBill += consumption * tier.rate;
     remaining -= consumption;
+
+    fixedCharge = tier.fixed; 
     previousLimit = tier.limit;
   }
 
-  return parseFloat(totalBill.toFixed(2));
-}
+  const finalBill = totalBill + fixedCharge;
 
+  return parseFloat(finalBill.toFixed(2));
+}
 /**
  * Predict monthly bill
  */

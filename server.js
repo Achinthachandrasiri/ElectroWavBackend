@@ -6,6 +6,9 @@ const { connectRabbitMQ } = require("./config/rabbitmq");
 const { startSensorService } = require("./services/consumerService");
 const { sendFourMinAverage } = require("./services/electricityCostService");
 const sensorRoutes = require('./routes/sensor');
+const authRoutes = require("./routes/authRoutes");
+const postRoutes = require("./routes/postRoutes");
+const getRoutes = require("./routes/getRoutes");
 const connectDB = require("./config/database");
 
 const app = express();
@@ -20,23 +23,17 @@ const QUEUE = "sensor_data";
 app.use(cors({ origin: "*" }));
 app.use(express.json());
 app.use('/api', sensorRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api", postRoutes);
+app.use("/api", getRoutes);
 
 //  Connect to MongoDB
 connectDB().then(() => {
   console.log("Database connected, starting RabbitMQ producer and consumer...");
 
-  // --- Producer: generate fake sensor data every 4 sec ---
   connectRabbitMQ()
-    .then((channel) => {
-      console.log("Producer connected to RabbitMQ");
-
-      setInterval(() => {
-        const data = generateSensorData();
-        channel.sendToQueue(QUEUE, Buffer.from(JSON.stringify(data)), { persistent: true });
-        console.log("[RAW DATA PUSHED → RabbitMQ]", data);
-      }, 4000);
-
-      // --- Start consumer + average calculation service ---
+    .then(() => {
+      console.log("RabbitMQ connected – waiting for real ESP32 data...");
       startSensorService(io, QUEUE);
     })
     .catch(console.error);

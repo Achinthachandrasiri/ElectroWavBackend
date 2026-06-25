@@ -3,6 +3,7 @@ const { connectRabbitMQ } = require("../config/rabbitmq");
 const { saveAverage4Min, saveAverage1Hour, saveAverage1Day } = require("../controllers/dataAverageController");
 const MonthlyEnergy = require("../models/MonthlyEnergy");
 const { predictMonthlyBill } = require("../controllers/billingController");
+const { checkAndEmitAlert } = require("../controllers/alertsController");
 
 async function startSensorService(io, queueName = "sensor_data") {
   try {
@@ -112,6 +113,7 @@ async function startSensorService(io, queueName = "sensor_data") {
 
           // Emit raw data to frontend
           io.emit("sensor-data", data);
+          await checkAndEmitAlert(data, io); 
 
           // Update monthly cumulative energy
           await updateMonthlyEnergy(data);

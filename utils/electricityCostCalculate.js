@@ -1,30 +1,47 @@
-// utils/billing.js
-function calculateBillSriLanka(energyKWh) {
-    const fixedCharge = 80; // LKR
-    const blocks = [
-        { upto: 60, rate: 6.0 },
-        { upto: 30, rate: 14.0 },
-        { upto: 30, rate: 20.0 },
-        { upto: null, rate: 25.0 }
-    ];
+// utils/electricityCostCalculate.js
 
-    let remaining = energyKWh;
-    let bill = fixedCharge;
+function calculateBillSriLanka(units) {
+  units = Number(units);
 
-    for (const block of blocks) {
-        if (remaining <= 0) break;
+  if (isNaN(units) || units < 0) {
+    return 0;
+  }
 
-        if (block.upto === null) {
-            bill += remaining * block.rate;
-            remaining = 0;
-        } else {
-            const blockKWh = Math.min(remaining, block.upto);
-            bill += blockKWh * block.rate;
-            remaining -= blockKWh;
-        }
-    }
+  let energyCost = 0;
+  let fixedCharge = 80; // LKR fixed charge
 
-    return bill;
+  // 0–30 units
+  if (units <= 30) {
+    energyCost = units * 30;
+  }
+
+  // 31–60 units
+  else if (units <= 60) {
+    energyCost =
+      (30 * 30) +                // first 30 units
+      ((units - 30) * 37);       // next units
+  }
+
+  // 61–90 units
+  else if (units <= 90) {
+    energyCost =
+      (30 * 30) +                // 0–30
+      (30 * 37) +                // 31–60
+      ((units - 60) * 42);       // 61–90
+  }
+
+  // above 90 units
+  else {
+    energyCost =
+      (30 * 30) +                // 0–30
+      (30 * 37) +                // 31–60
+      (30 * 42) +                // 61–90
+      ((units - 90) * 50);       // 90+
+  }
+
+  const totalBill = energyCost + fixedCharge;
+
+  return Number(totalBill.toFixed(2));
 }
 
 module.exports = { calculateBillSriLanka };
